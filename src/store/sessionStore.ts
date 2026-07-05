@@ -22,8 +22,10 @@ type RunningSession = {
 
 type SessionStore = {
   config: SessionConfig;
+  pendingSettingsDraft: SessionConfig | null;
   running: RunningSession | null;
   setConfig: (config: SessionConfig) => void;
+  setPendingSettingsDraft: (config: SessionConfig | null) => void;
   updateConfig: (patch: Partial<SessionConfig>) => void;
   startSession: () => void;
   recordResponse: (channel: StimulusChannel) => void;
@@ -40,7 +42,7 @@ function makeId(): string {
   return `session-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function normalizeConfig(config: SessionConfig): SessionConfig {
+export function normalizeConfig(config: SessionConfig): SessionConfig {
   const n = Math.max(1, Math.floor(config.n));
   const channels = ensureValidChannels(config.channels);
   return {
@@ -68,8 +70,10 @@ export const useSessionStore = create<SessionStore>()(
   persist(
     (set, get) => ({
       config: DEFAULT_CONFIG,
+      pendingSettingsDraft: null,
       running: null,
-      setConfig: (config) => set({ config: normalizeConfig(config) }),
+      setConfig: (config) => set({ config: normalizeConfig(config), pendingSettingsDraft: null }),
+      setPendingSettingsDraft: (config) => set({ pendingSettingsDraft: config ? normalizeConfig(config) : null }),
       updateConfig: (patch) =>
         set((state) => ({
           config: normalizeConfig({ ...state.config, ...patch })

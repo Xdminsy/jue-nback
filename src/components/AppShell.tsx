@@ -1,6 +1,6 @@
 import { Activity, BarChart3, BrainCircuit, Database, History, SlidersHorizontal } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import clsx from "clsx";
 import { InstallButton } from "./InstallButton";
@@ -20,7 +20,23 @@ export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const running = useSessionStore((state) => state.running);
+  const pendingSettingsDraft = useSessionStore((state) => state.pendingSettingsDraft);
+  const setConfig = useSessionStore((state) => state.setConfig);
   const trainingLocked = Boolean(running && running.phase !== "complete");
+  const hasPendingSettings = location.pathname === "/settings" && Boolean(pendingSettingsDraft);
+
+  const confirmSettingsNavigation = useCallback(() => {
+    if (!hasPendingSettings || !pendingSettingsDraft) {
+      return true;
+    }
+
+    if (!window.confirm(t("settings.applyBeforeLeaving"))) {
+      return false;
+    }
+
+    setConfig(pendingSettingsDraft);
+    return true;
+  }, [hasPendingSettings, pendingSettingsDraft, setConfig, t]);
 
   useEffect(() => {
     if (trainingLocked && location.pathname !== "/train") {
@@ -41,6 +57,20 @@ export function AppShell() {
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [trainingLocked]);
+
+  useEffect(() => {
+    if (!hasPendingSettings) {
+      return;
+    }
+
+    const handler = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasPendingSettings]);
 
   return (
     <div className="app-shell">
@@ -82,6 +112,11 @@ export function AppShell() {
                 key={item.to}
                 onClick={(event) => {
                   if (locked) {
+                    event.preventDefault();
+                    return;
+                  }
+
+                  if (item.to !== location.pathname && !confirmSettingsNavigation()) {
                     event.preventDefault();
                   }
                 }}

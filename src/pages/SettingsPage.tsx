@@ -1,11 +1,11 @@
 import * as Switch from "@radix-ui/react-switch";
 import { Check, Minus, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChannelBadge } from "../components/ChannelBadge";
 import { PageHeader } from "../components/PageHeader";
 import { CHANNEL_DEFINITIONS, MODE_PRESETS, configFromPreset, ensureValidChannels } from "../lib/channels";
-import { useSessionStore } from "../store/sessionStore";
+import { normalizeConfig, useSessionStore } from "../store/sessionStore";
 import { STIMULUS_CHANNELS, type SessionConfig, type StimulusChannel } from "../types";
 import { formatPercent } from "../utils/format";
 
@@ -13,19 +13,28 @@ export function SettingsPage() {
   const { t } = useTranslation();
   const storedConfig = useSessionStore((state) => state.config);
   const setConfig = useSessionStore((state) => state.setConfig);
+  const setPendingSettingsDraft = useSessionStore((state) => state.setPendingSettingsDraft);
   const [draft, setDraft] = useState<SessionConfig>(storedConfig);
   const [saved, setSaved] = useState(false);
+  const normalizedDraft = useMemo(() => normalizeConfig(draft), [draft]);
+  const hasPendingChanges = useMemo(
+    () => configKey(draft) !== configKey(storedConfig),
+    [draft, storedConfig]
+  );
 
   const selectedPreset = useMemo(
     () => MODE_PRESETS.find((preset) => preset.id === draft.modeName),
     [draft.modeName]
   );
 
+  useEffect(() => {
+    setPendingSettingsDraft(hasPendingChanges ? normalizedDraft : null);
+    return () => setPendingSettingsDraft(null);
+  }, [hasPendingChanges, normalizedDraft, setPendingSettingsDraft]);
+
   const apply = () => {
-    setConfig({
-      ...draft,
-      channels: ensureValidChannels(draft.channels)
-    });
+    setConfig(normalizedDraft);
+    setDraft(normalizedDraft);
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1800);
   };
@@ -180,6 +189,10 @@ export function SettingsPage() {
       </section>
     </div>
   );
+}
+
+function configKey(config: SessionConfig): string {
+  return JSON.stringify(normalizeConfig(config));
 }
 
 function NumberStepper({

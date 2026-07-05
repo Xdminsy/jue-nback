@@ -177,8 +177,15 @@ async function runCase(browser, name, contextOptions) {
   }
 
   await presetSelect.selectOption("color-audio");
-  await applyButton.click();
-  await page.getByRole("link", { name: /训练|Train/ }).click();
+  const applyDialogPromise = page.waitForEvent("dialog");
+  const leaveModesPromise = page.getByRole("link", { name: /训练|Train/ }).click();
+  const applyDialog = await applyDialogPromise;
+  if (!/未应用|not been applied/i.test(applyDialog.message())) {
+    throw new Error(`${name}: unexpected pending settings dialog message: ${applyDialog.message()}`);
+  }
+  await applyDialog.accept();
+  await leaveModesPromise;
+  await page.getByRole("heading", { name: /训练|Training/ }).waitFor();
   if ((await page.locator(".stimulus-grid").count()) !== 0) {
     throw new Error(`${name}: color/audio mode should not render the position grid.`);
   }

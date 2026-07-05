@@ -69,7 +69,8 @@ export const resources = {
         speech: "系统语音",
         tone: "音调代替",
         auto: "自动语音",
-        saved: "设置已应用"
+        saved: "设置已应用",
+        applyBeforeLeaving: "模式设置还未应用。是否应用后离开？"
       },
       stats: {
         title: "统计面板",
@@ -203,7 +204,8 @@ export const resources = {
         speech: "System speech",
         tone: "Tone substitute",
         auto: "Auto speech",
-        saved: "Settings applied"
+        saved: "Settings applied",
+        applyBeforeLeaving: "Mode changes have not been applied. Apply them before leaving?"
       },
       stats: {
         title: "Stats",
