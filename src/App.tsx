@@ -5,7 +5,7 @@ import { AppShell } from "./components/AppShell";
 import { TrainPage } from "./pages/TrainPage";
 
 const SettingsPage = lazy(() => import("./pages/SettingsPage").then((module) => ({ default: module.SettingsPage })));
-const StatsPage = lazy(() => import("./pages/StatsPage").then((module) => ({ default: module.StatsPage })));
+const ProgressPage = lazy(() => import("./pages/ProgressPage").then((module) => ({ default: module.ProgressPage })));
 const HistoryPage = lazy(() => import("./pages/HistoryPage").then((module) => ({ default: module.HistoryPage })));
 const DataPage = lazy(() => import("./pages/DataPage").then((module) => ({ default: module.DataPage })));
 
@@ -80,7 +80,7 @@ export default function App() {
             path="/stats"
             element={
               <SafeRoute>
-                <StatsPage />
+                <ProgressPage />
               </SafeRoute>
             }
           />

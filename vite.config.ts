@@ -14,6 +14,10 @@ export default defineConfig({
     target: "es2019",
     rollupOptions: {
       output: {
+        // Keep lazy route chunks out of ad/privacy filter keyword paths.
+        chunkFileNames(chunkInfo) {
+          return chunkInfo.name.includes("vendor") ? "assets/[name]-[hash].js" : "assets/chunk-[hash].js";
+        },
         manualChunks(id) {
           const normalizedId = id.replaceAll("\\", "/");
           if (!normalizedId.includes("node_modules")) {

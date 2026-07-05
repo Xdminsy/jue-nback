@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CONFIG } from "./channels";
-import { buildDashboardStats } from "./stats";
+import { buildDashboardStats } from "./progress";
 import type { ChannelScore, SessionRecord } from "../types";
 
 const score: ChannelScore = {

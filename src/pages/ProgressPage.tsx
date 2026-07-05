@@ -2,12 +2,12 @@ import { useTranslation } from "react-i18next";
 import { ChannelBadge } from "../components/ChannelBadge";
 import { MetricCard } from "../components/MetricCard";
 import { PageHeader } from "../components/PageHeader";
-import { buildDashboardStats, type DayBucket } from "../lib/stats";
+import { buildDashboardStats, type DayBucket } from "../lib/progress";
 import { useSessions } from "../hooks/useSessions";
 import { STIMULUS_CHANNELS } from "../types";
 import { formatMinutes, formatPercent } from "../utils/format";
 
-export function StatsPage() {
+export function ProgressPage() {
   const { t } = useTranslation();
   const { sessions, loading } = useSessions();
   const stats = buildDashboardStats(sessions);
