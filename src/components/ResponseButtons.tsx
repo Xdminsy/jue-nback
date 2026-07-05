@@ -1,0 +1,40 @@
+import { useTranslation } from "react-i18next";
+import clsx from "clsx";
+import { CHANNEL_DEFINITIONS } from "../lib/channels";
+import type { ChannelMap, StimulusChannel } from "../types";
+import { ChannelBadge } from "./ChannelBadge";
+
+type ResponseButtonsProps = {
+  answeredChannels?: ChannelMap<boolean>;
+  channels: StimulusChannel[];
+  disabled: boolean;
+  onRespond: (channel: StimulusChannel) => void;
+};
+
+export function ResponseButtons({ answeredChannels = {}, channels, disabled, onRespond }: ResponseButtonsProps) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="response-grid">
+      {channels.map((channel) => {
+        const definition = CHANNEL_DEFINITIONS[channel];
+        const answered = Boolean(answeredChannels[channel]);
+        return (
+          <button
+            aria-pressed={answered}
+            className={clsx("response-button", answered && "answered")}
+            disabled={disabled}
+            key={channel}
+            onClick={() => onRespond(channel)}
+            title={`${t(definition.labelKey)} (${definition.responseKey})`}
+            type="button"
+          >
+            <ChannelBadge channel={channel} compact />
+            <span>{t("train.pressMatch", { channel: t(definition.shortLabelKey) })}</span>
+            <kbd>{definition.responseKey}</kbd>
+          </button>
+        );
+      })}
+    </div>
+  );
+}

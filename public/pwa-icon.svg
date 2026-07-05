@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Jue N-Back icon">
+  <rect width="512" height="512" rx="96" fill="#137a72"/>
+  <rect x="104" y="104" width="92" height="92" rx="18" fill="#f7f4ed"/>
+  <rect x="210" y="104" width="92" height="92" rx="18" fill="#f2c14e"/>
+  <rect x="316" y="104" width="92" height="92" rx="18" fill="#f7f4ed"/>
+  <rect x="104" y="210" width="92" height="92" rx="18" fill="#e4572e"/>
+  <rect x="210" y="210" width="92" height="92" rx="18" fill="#f7f4ed"/>
+  <rect x="316" y="210" width="92" height="92" rx="18" fill="#6c63ff"/>
+  <rect x="104" y="316" width="92" height="92" rx="18" fill="#f7f4ed"/>
+  <path d="M252 316h50l72-48v136l-72-48h-50z" fill="#f7f4ed"/>
+  <path d="M390 306c18 20 18 60 0 80" fill="none" stroke="#f7f4ed" stroke-width="22" stroke-linecap="round"/>
+</svg>
