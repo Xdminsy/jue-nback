@@ -26,6 +26,7 @@ export type SessionConfig = {
   matchRate: number;
   audioPreference: AudioPreference;
   responseKeys: string[];
+  sessionKey: string;
 };
 
 export type TrialStimulus = {

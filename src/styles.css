@@ -653,6 +653,21 @@ button:disabled {
   font-size: 0.8rem;
 }
 
+.shortcut-key {
+  min-width: 34px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  color: var(--teal-dark);
+  background: rgb(255 255 255 / 88%);
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.ghost-button .shortcut-key {
+  color: white;
+  background: var(--teal);
+}
+
 .primary-button {
   padding: 0 16px;
   color: white;

@@ -77,6 +77,7 @@ export const resources = {
         saved: "设置已应用",
         applyBeforeLeaving: "模式设置还未应用。是否应用后离开？",
         responseKeys: "桌面快捷键",
+        sessionKey: "开始/停止",
         responseKeySlot: "第 {{slot}} 个：{{channel}}"
       },
       stats: {
@@ -222,6 +223,7 @@ export const resources = {
         saved: "Settings applied",
         applyBeforeLeaving: "Mode changes have not been applied. Apply them before leaving?",
         responseKeys: "Desktop shortcuts",
+        sessionKey: "Start/stop",
         responseKeySlot: "Slot {{slot}}: {{channel}}"
       },
       stats: {

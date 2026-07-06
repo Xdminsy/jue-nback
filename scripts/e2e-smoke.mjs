@@ -310,7 +310,19 @@ async function runCase(browser, name, contextOptions) {
   await assertTrialStatusFits(page, name);
   await assertInViewport(page, name, page.locator(".stimulus-surface").first(), "stimulus surface");
   await assertInViewport(page, name, startButton, "start button");
-  await startButton.click();
+  const sessionShortcutVisible = await startButton.locator(".shortcut-key").isVisible();
+  if (name === "mobile" && sessionShortcutVisible) {
+    throw new Error(`${name}: session keyboard shortcut should not be visible on touch layout.`);
+  }
+  if (name === "desktop") {
+    const sessionShortcut = await startButton.locator(".shortcut-key").textContent();
+    if (sessionShortcut !== "Space") {
+      throw new Error(`${name}: default session shortcut should be Space.`);
+    }
+    await page.keyboard.press("Space");
+  } else {
+    await startButton.click();
+  }
   await page.locator(".trial-status .trial-label:visible").filter({ hasText: /试次 1|Trial 1|1\/\d+/ }).waitFor();
   await assertTrialStatusFits(page, name);
   const positionButton = page.getByRole("button", { name: /位置 匹配|Position match/ });
@@ -363,7 +375,11 @@ async function runCase(browser, name, contextOptions) {
   }
   await closeMobileNav(page, name);
 
-  await page.getByRole("button", { name: /停止|Stop/ }).click();
+  if (name === "desktop") {
+    await page.keyboard.press("Space");
+  } else {
+    await page.getByRole("button", { name: /停止|Stop/ }).click();
+  }
   await clickNav(page, name, /统计|Stats/);
   await page.getByRole("heading", { name: /统计面板|Stats/ }).waitFor();
   await page.locator(".metric-card").filter({ hasText: /今日训练|Today/ }).filter({ hasText: /0\/10/ }).waitFor();
@@ -408,15 +424,21 @@ async function runCase(browser, name, contextOptions) {
 
   await clickNav(page, name, /模式|Modes/);
   await presetSelect.selectOption("tone-dual");
-  await page.locator(".response-key-input").nth(0).fill("h");
-  await page.locator(".response-key-input").nth(1).fill("g");
+  await page.locator(".channel-response-key-input").nth(0).fill("h");
+  await page.locator(".channel-response-key-input").nth(1).fill("g");
+  await page.locator(".session-key-input").fill("s");
   await applyButton.click();
   await page.evaluate(() => {
     window.__oscStarts = 0;
     window.__frequencies = [];
   });
   await clickNav(page, name, /训练|Train/);
-  await page.getByRole("button", { name: startSessionButtonName }).click();
+  await page.getByRole("button", { name: startSessionButtonName }).waitFor();
+  if (name === "desktop") {
+    await page.keyboard.press("KeyS");
+  } else {
+    await page.getByRole("button", { name: startSessionButtonName }).click();
+  }
   await page.waitForTimeout(100);
   const customShortcutButton = page.getByRole("button", { name: /位置 匹配|Position match/ });
   await page.keyboard.press("KeyH");
@@ -428,7 +450,11 @@ async function runCase(browser, name, contextOptions) {
   if (toneState.starts < 1 || toneState.frequencies.length < 1) {
     throw new Error(`${name}: tone-dual mode did not start Web Audio tone playback.`);
   }
-  await page.getByRole("button", { name: /停止|Stop/ }).click();
+  if (name === "desktop") {
+    await page.keyboard.press("KeyS");
+  } else {
+    await page.getByRole("button", { name: /停止|Stop/ }).click();
+  }
 
   if (errors.length > 0) {
     throw new Error(`${name} browser errors:\n${errors.join("\n")}`);

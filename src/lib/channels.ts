@@ -1,4 +1,5 @@
 import { jaeggiBlockTrialCount } from "./protocol";
+import { DEFAULT_SESSION_KEY } from "./responseKeys";
 import type { ModePreset, SessionConfig, StimulusChannel } from "../types";
 
 export type ChannelDefinition = {
@@ -91,7 +92,8 @@ export const DEFAULT_CONFIG: SessionConfig = {
   responseMs: 2250,
   matchRate: 0.3,
   audioPreference: "auto",
-  responseKeys: ["J", "K", "L", ";", "F"]
+  responseKeys: ["J", "K", "L", ";", "F"],
+  sessionKey: DEFAULT_SESSION_KEY
 };
 
 export function getPreset(id: string): ModePreset | undefined {

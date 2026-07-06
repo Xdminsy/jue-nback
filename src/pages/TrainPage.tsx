@@ -1,5 +1,5 @@
 import { RotateCcw, Save, Zap } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ChannelBadge } from "../components/ChannelBadge";
 import { MetricCard } from "../components/MetricCard";
@@ -9,7 +9,12 @@ import { VisualStimulus } from "../components/VisualStimulus";
 import { getPreset } from "../lib/channels";
 import { playStimulusAudio, primeAudio } from "../lib/audio";
 import { buildDashboardStats } from "../lib/progress";
-import { keyboardEventMatchesResponseKey, responseKeyAt } from "../lib/responseKeys";
+import {
+  keyboardEventMatchesResponseKey,
+  keyboardEventMatchesShortcutKey,
+  responseKeyAt,
+  shortcutKeyLabel
+} from "../lib/responseKeys";
 import { saveSession } from "../lib/storage";
 import { useSessionStore } from "../store/sessionStore";
 import { useSessions } from "../hooks/useSessions";
@@ -48,6 +53,10 @@ export function TrainPage() {
   const trial = running ? running.trials[running.currentIndex] : null;
   const preset = getPreset(config.modeName);
   const currentResponse = running?.responses.find((item) => item.trialIndex === running.currentIndex);
+  const start = useCallback(async () => {
+    await primeAudio();
+    startSession();
+  }, [startSession]);
 
   useEffect(() => {
     if (!running || !trial || running.phase !== "stimulus") {
@@ -85,6 +94,28 @@ export function TrainPage() {
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
+      if (event.repeat || isEditableTarget(event.target)) {
+        return;
+      }
+
+      if (!keyboardEventMatchesShortcutKey(event, config.sessionKey)) {
+        return;
+      }
+
+      event.preventDefault();
+      if (running && running.phase !== "complete") {
+        resetSession();
+      } else {
+        void start();
+      }
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [config.sessionKey, resetSession, running, start]);
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
       if (!running || running.phase === "complete" || event.repeat || isEditableTarget(event.target)) {
         return;
       }
@@ -115,11 +146,6 @@ export function TrainPage() {
     });
   }, [markSaved, running?.saved, running?.summary]);
 
-  const start = async () => {
-    await primeAudio();
-    startSession();
-  };
-
   const canRespond = Boolean(running && running.phase !== "complete");
   const current = running ? running.currentIndex + 1 : 0;
   const total = running?.trials.length ?? config.trials;
@@ -128,6 +154,7 @@ export function TrainPage() {
   const compactTrialLabel = running ? t("train.trialShort", { current, total }) : modeLabel;
   const sessionActionLabel = running?.phase === "complete" ? t("train.newSession") : t("train.startSession");
   const compactSessionActionLabel = running?.phase === "complete" ? t("train.newSessionShort") : t("common.start");
+  const sessionKeyLabel = shortcutKeyLabel(config.sessionKey);
   const summary = running?.summary;
   const trainPageClassName = ["page-flow train-page", summary ? "has-session-result" : null]
     .filter(Boolean)
@@ -187,11 +214,13 @@ export function TrainPage() {
                     <Zap size={18} />
                     <span className="desktop-label">{sessionActionLabel}</span>
                     <span className="mobile-label">{compactSessionActionLabel}</span>
+                    <kbd className="desktop-label shortcut-key">{sessionKeyLabel}</kbd>
                   </button>
                 ) : (
                   <button className="ghost-button" onClick={resetSession} type="button">
                     <RotateCcw size={18} />
                     {t("common.stop")}
+                    <kbd className="desktop-label shortcut-key">{sessionKeyLabel}</kbd>
                   </button>
                 )}
               </div>

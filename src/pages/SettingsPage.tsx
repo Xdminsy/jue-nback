@@ -1,13 +1,19 @@
 import * as Switch from "@radix-ui/react-switch";
 import { Check, Minus, Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ChannelBadge } from "../components/ChannelBadge";
 import { PageHeader } from "../components/PageHeader";
 import { CHANNEL_DEFINITIONS, MODE_PRESETS, configFromPreset, ensureValidChannels } from "../lib/channels";
 import { MAX_DAILY_SESSION_GOAL, MIN_DAILY_SESSION_GOAL, normalizeDailySessionGoal } from "../lib/dailyGoal";
 import { jaeggiBlockTrialCount } from "../lib/protocol";
-import { normalizeResponseKey, responseKeyAt } from "../lib/responseKeys";
+import {
+  normalizeResponseKey,
+  normalizeShortcutKey,
+  responseKeyAt,
+  shortcutKeyFromKeyboardEvent,
+  shortcutKeyLabel
+} from "../lib/responseKeys";
 import { normalizeConfig, useSessionStore } from "../store/sessionStore";
 import { STIMULUS_CHANNELS, type SessionConfig, type StimulusChannel } from "../types";
 import { formatPercent } from "../utils/format";
@@ -81,6 +87,19 @@ export function SettingsPage() {
       responseKeys[index] = value ? normalizeResponseKey(value.slice(-1), index) : "";
       return { ...current, responseKeys };
     });
+  };
+
+  const setSessionKey = (value: string) => {
+    setDraft((current) => ({ ...current, sessionKey: normalizeShortcutKey(value) }));
+  };
+
+  const captureSessionKey = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Tab") {
+      return;
+    }
+
+    event.preventDefault();
+    setSessionKey(shortcutKeyFromKeyboardEvent(event.nativeEvent));
   };
 
   const toggleChannel = (channel: StimulusChannel) => {
@@ -242,6 +261,17 @@ export function SettingsPage() {
             <div className="settings-wide-field response-key-settings">
               <span>{t("settings.responseKeys")}</span>
               <div className="response-key-grid">
+                <label className="field response-key-field" key="session-key">
+                  <span>{t("settings.sessionKey")}</span>
+                  <input
+                    aria-label={t("settings.sessionKey")}
+                    className="response-key-input session-key-input"
+                    inputMode="text"
+                    onChange={(event) => setSessionKey(event.target.value)}
+                    onKeyDown={captureSessionKey}
+                    value={shortcutKeyLabel(draft.sessionKey)}
+                  />
+                </label>
                 {draft.channels.map((channel, index) => {
                   const definition = CHANNEL_DEFINITIONS[channel];
                   return (
@@ -257,7 +287,7 @@ export function SettingsPage() {
                           slot: index + 1,
                           channel: t(definition.shortLabelKey)
                         })}
-                        className="response-key-input"
+                        className="response-key-input channel-response-key-input"
                         inputMode="text"
                         maxLength={1}
                         onChange={(event) => setResponseKey(index, event.target.value)}

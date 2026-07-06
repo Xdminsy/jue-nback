@@ -4,7 +4,7 @@ import { DEFAULT_CONFIG, ensureValidChannels } from "../lib/channels";
 import { DEFAULT_DAILY_SESSION_GOAL, normalizeDailySessionGoal } from "../lib/dailyGoal";
 import { generateTrials } from "../lib/engine";
 import { jaeggiBlockTrialCount } from "../lib/protocol";
-import { normalizeResponseKeys } from "../lib/responseKeys";
+import { normalizeResponseKeys, normalizeShortcutKey } from "../lib/responseKeys";
 import { finalizeSession } from "../lib/scoring";
 import type { SessionConfig, SessionRecord, StimulusChannel, TrialResult, TrialStimulus } from "../types";
 
@@ -61,7 +61,8 @@ export function normalizeConfig(config: SessionConfig): SessionConfig {
     stimulusMs: Math.max(100, Math.floor(config.stimulusMs)),
     responseMs: Math.max(250, Math.floor(config.responseMs)),
     matchRate: Math.min(0.75, Math.max(0.05, config.matchRate)),
-    responseKeys: normalizeResponseKeys(config.responseKeys, channels.length)
+    responseKeys: normalizeResponseKeys(config.responseKeys, channels.length),
+    sessionKey: normalizeShortcutKey(config.sessionKey)
   };
 }
 

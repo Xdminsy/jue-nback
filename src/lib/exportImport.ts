@@ -17,7 +17,8 @@ const sessionConfigSchema = z.object({
   responseMs: z.number().int().min(100),
   matchRate: z.number().min(0).max(1),
   audioPreference: z.enum(["speech", "tone", "auto"]),
-  responseKeys: z.array(z.string()).optional()
+  responseKeys: z.array(z.string()).optional(),
+  sessionKey: z.string().optional()
 });
 
 const channelScoreSchema = z.object({
