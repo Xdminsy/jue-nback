@@ -23,14 +23,17 @@ The default adaptive mode follows a Jaeggi-style dual n-back block protocol, gen
 At the end of each block, each active channel gets an error count:
 
 ```text
-errors = misses + false alarms
+channel errors = misses + false alarms
+total errors = sum(channel errors)
 ```
 
 N changes by at most 1:
 
 - Increase N by 1 when every active channel has 2 or fewer errors.
-- Decrease N by 1 when any active channel has 6 or more errors.
+- Decrease N by 1 when the block has 6 or more total errors across active channels.
 - Otherwise keep N unchanged.
+
+For custom modes with more than two active channels, the total-error decrease threshold is evaluated first if both thresholds could apply.
 
 This intentionally allows N to oscillate around the user's current capacity boundary, such as `2 -> 3 -> 2 -> 3`.
 

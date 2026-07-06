@@ -1,6 +1,6 @@
 export const JAEGGI_BASE_TRIALS = 20;
 export const JAEGGI_INCREASE_MAX_ERRORS_PER_CHANNEL = 2;
-export const JAEGGI_DECREASE_MIN_ERRORS_PER_CHANNEL = 6;
+export const JAEGGI_DECREASE_MIN_TOTAL_ERRORS = 6;
 export const JAEGGI_DUAL_OVERLAP_RATIO = 1 / 3;
 
 export function jaeggiBlockTrialCount(n: number): number {
