@@ -3,21 +3,25 @@ import { DEFAULT_CONFIG } from "./channels";
 import { generateTrials, isMatchAt } from "./engine";
 import type { SessionConfig } from "../types";
 
-function rng(values: number[]) {
-  let index = 0;
-  return () => values[index++ % values.length];
-}
-
 describe("generateTrials", () => {
-  it("generates independent n-back matches for each active channel", () => {
+  it("generates fixed Jaeggi-style target counts for dual-channel blocks", () => {
     const config: SessionConfig = {
       ...DEFAULT_CONFIG,
       channels: ["position", "audio-letter"],
       n: 2,
-      trials: 8,
-      matchRate: 0.5
+      trials: 22,
+      matchRate: 0.3
     };
-    const trials = generateTrials(config, rng([0.1, 0.2, 0.9, 0.4, 0.2, 0.6, 0.1, 0.8]));
+    const trials = generateTrials(config, () => 0);
+    const positionTargets = trials.flatMap((trial) => (trial.expectedMatches.position ? [trial.trialIndex] : []));
+    const audioTargets = trials.flatMap((trial) => (trial.expectedMatches["audio-letter"] ? [trial.trialIndex] : []));
+    const overlappingTargets = positionTargets.filter((trialIndex) => audioTargets.includes(trialIndex));
+
+    expect(positionTargets).toHaveLength(6);
+    expect(audioTargets).toHaveLength(6);
+    expect(overlappingTargets).toHaveLength(2);
+    expect(positionTargets.every((trialIndex) => trialIndex >= config.n)).toBe(true);
+    expect(audioTargets.every((trialIndex) => trialIndex >= config.n)).toBe(true);
 
     for (let index = 0; index < trials.length; index += 1) {
       for (const channel of config.channels) {

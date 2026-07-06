@@ -1,3 +1,4 @@
+import { jaeggiBlockTrialCount } from "./protocol";
 import type { ModePreset, SessionConfig, StimulusChannel } from "../types";
 
 export type ChannelDefinition = {
@@ -85,7 +86,7 @@ export const DEFAULT_CONFIG: SessionConfig = {
   channels: ["position", "audio-letter"],
   n: 2,
   adaptive: true,
-  trials: 22,
+  trials: jaeggiBlockTrialCount(2),
   stimulusMs: 750,
   responseMs: 2250,
   matchRate: 0.3,
@@ -103,7 +104,7 @@ export function configFromPreset(preset: ModePreset, base = DEFAULT_CONFIG): Ses
     id: preset.id,
     modeName: preset.id,
     channels: [...preset.channels],
-    trials: Math.max(base.trials, 20 + base.n)
+    trials: base.adaptive ? jaeggiBlockTrialCount(base.n) : Math.max(base.trials, jaeggiBlockTrialCount(base.n))
   };
 }
 

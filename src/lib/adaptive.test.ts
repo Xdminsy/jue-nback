@@ -34,16 +34,22 @@ function session(overrides: Partial<SessionRecord>): Pick<SessionRecord, "config
 }
 
 describe("recommendNextN", () => {
-  it("increases N after strong adaptive performance", () => {
+  it("increases N when every active channel has at most two errors", () => {
     expect(recommendNextN(session({}))).toBe(3);
   });
 
-  it("decreases N after weak performance", () => {
+  it("decreases N when any active channel has at least six errors", () => {
     const weak = session({
       overallAccuracy: 0.5
     });
-    weak.scoreByChannel.position = score({ accuracy: 0.5, recall: 0.25, falseAlarmRate: 0.4 });
+    weak.scoreByChannel.position = score({ misses: 4, falseAlarms: 2, accuracy: 0.5, recall: 0.25, falseAlarmRate: 0.4 });
     expect(recommendNextN(weak)).toBe(1);
+  });
+
+  it("keeps N unchanged for middle error counts", () => {
+    const middle = session({});
+    middle.scoreByChannel.position = score({ misses: 2, falseAlarms: 1 });
+    expect(recommendNextN(middle)).toBe(2);
   });
 
   it("keeps fixed N unchanged", () => {

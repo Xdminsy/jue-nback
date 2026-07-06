@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ChannelBadge } from "../components/ChannelBadge";
 import { PageHeader } from "../components/PageHeader";
 import { CHANNEL_DEFINITIONS, MODE_PRESETS, configFromPreset, ensureValidChannels } from "../lib/channels";
+import { jaeggiBlockTrialCount } from "../lib/protocol";
 import { normalizeResponseKey, responseKeyAt } from "../lib/responseKeys";
 import { normalizeConfig, useSessionStore } from "../store/sessionStore";
 import { STIMULUS_CHANNELS, type SessionConfig, type StimulusChannel } from "../types";
@@ -41,7 +42,17 @@ export function SettingsPage() {
   };
 
   const setNumber = (key: keyof Pick<SessionConfig, "n" | "trials" | "stimulusMs" | "responseMs">, value: number) => {
-    setDraft((current) => ({ ...current, [key]: value }));
+    setDraft((current) => {
+      if (key === "n" && current.adaptive) {
+        return { ...current, n: value, trials: jaeggiBlockTrialCount(value) };
+      }
+
+      if (key === "trials" && current.adaptive) {
+        return { ...current, trials: jaeggiBlockTrialCount(current.n) };
+      }
+
+      return { ...current, [key]: value };
+    });
   };
 
   const setResponseKey = (index: number, value: string) => {
@@ -133,7 +144,13 @@ export function SettingsPage() {
               <Switch.Root
                 checked={draft.adaptive}
                 className="switch-root"
-                onCheckedChange={(adaptive) => setDraft((current) => ({ ...current, adaptive }))}
+                onCheckedChange={(adaptive) =>
+                  setDraft((current) => ({
+                    ...current,
+                    adaptive,
+                    trials: adaptive ? jaeggiBlockTrialCount(current.n) : current.trials
+                  }))
+                }
               >
                 <Switch.Thumb className="switch-thumb" />
               </Switch.Root>

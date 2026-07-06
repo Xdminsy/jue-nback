@@ -1,4 +1,5 @@
 import type { SessionRecord } from "../types";
+import { JAEGGI_DECREASE_MIN_ERRORS_PER_CHANNEL, JAEGGI_INCREASE_MAX_ERRORS_PER_CHANNEL } from "./protocol";
 
 export function recommendNextN(session: Pick<SessionRecord, "config" | "overallAccuracy" | "scoreByChannel">): number {
   const currentN = session.config.n;
@@ -8,25 +9,13 @@ export function recommendNextN(session: Pick<SessionRecord, "config" | "overallA
   }
 
   const activeScores = session.config.channels.map((channel) => session.scoreByChannel[channel]);
-  const worstRecall = Math.min(...activeScores.map((score) => score.recall));
-  const worstAccuracy = Math.min(...activeScores.map((score) => score.accuracy));
-  const worstFalseAlarmRate = Math.max(...activeScores.map((score) => score.falseAlarmRate));
+  const errorCounts = activeScores.map((score) => score.misses + score.falseAlarms);
 
-  if (
-    session.overallAccuracy >= 0.85 &&
-    worstAccuracy >= 0.78 &&
-    worstRecall >= 0.7 &&
-    worstFalseAlarmRate <= 0.18
-  ) {
+  if (errorCounts.every((errors) => errors <= JAEGGI_INCREASE_MAX_ERRORS_PER_CHANNEL)) {
     return currentN + 1;
   }
 
-  if (
-    session.overallAccuracy < 0.62 ||
-    worstAccuracy < 0.55 ||
-    worstRecall < 0.35 ||
-    worstFalseAlarmRate > 0.38
-  ) {
+  if (errorCounts.some((errors) => errors >= JAEGGI_DECREASE_MIN_ERRORS_PER_CHANNEL)) {
     return Math.max(1, currentN - 1);
   }
 

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DEFAULT_CONFIG, ensureValidChannels } from "../lib/channels";
 import { generateTrials } from "../lib/engine";
+import { jaeggiBlockTrialCount } from "../lib/protocol";
 import { normalizeResponseKeys } from "../lib/responseKeys";
 import { finalizeSession } from "../lib/scoring";
 import type { SessionConfig, SessionRecord, StimulusChannel, TrialResult, TrialStimulus } from "../types";
@@ -51,7 +52,7 @@ export function normalizeConfig(config: SessionConfig): SessionConfig {
     channels,
     audioPreference: channels.includes("audio-letter") && config.audioPreference === "tone" ? "auto" : config.audioPreference,
     n,
-    trials: Math.max(n + 1, Math.floor(config.trials)),
+    trials: config.adaptive ? jaeggiBlockTrialCount(n) : Math.max(n + 1, Math.floor(config.trials)),
     stimulusMs: Math.max(100, Math.floor(config.stimulusMs)),
     responseMs: Math.max(250, Math.floor(config.responseMs)),
     matchRate: Math.min(0.75, Math.max(0.05, config.matchRate)),
@@ -173,7 +174,9 @@ export const useSessionStore = create<SessionStore>()(
                 phase: "complete",
                 summary
               },
-              config: state.config.adaptive ? { ...state.config, n: summary.nAfter, trials: Math.max(20 + summary.nAfter, state.config.trials) } : state.config
+              config: state.config.adaptive
+                ? { ...state.config, n: summary.nAfter, trials: jaeggiBlockTrialCount(summary.nAfter) }
+                : state.config
             };
           }
 
