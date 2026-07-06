@@ -119,6 +119,11 @@ export function TrainPage() {
   const canRespond = Boolean(running && running.phase !== "complete");
   const current = running ? running.currentIndex + 1 : 0;
   const total = running?.trials.length ?? config.trials;
+  const modeLabel = preset ? t(preset.labelKey) : config.modeName;
+  const trialLabel = running ? t("train.trial", { current, total }) : modeLabel;
+  const compactTrialLabel = running ? t("train.trialShort", { current, total }) : modeLabel;
+  const sessionActionLabel = running?.phase === "complete" ? t("train.newSession") : t("train.startSession");
+  const compactSessionActionLabel = running?.phase === "complete" ? t("train.newSessionShort") : t("common.start");
 
   return (
     <div className="page-flow train-page">
@@ -146,13 +151,8 @@ export function TrainPage() {
 
             <div className="practice-controls">
               <div className="trial-status">
-                <span>
-                  {running
-                    ? t("train.trial", { current, total })
-                    : preset
-                      ? t(preset.labelKey)
-                      : config.modeName}
-                </span>
+                <span className="trial-label trial-label-full">{trialLabel}</span>
+                <span className="trial-label trial-label-compact">{compactTrialLabel}</span>
                 <strong>
                   {running?.phase === "stimulus"
                     ? t("common.stimulus")
@@ -168,7 +168,8 @@ export function TrainPage() {
                 {!running || running.phase === "complete" ? (
                   <button className="primary-button" onClick={start} type="button">
                     <Zap size={18} />
-                    {running?.phase === "complete" ? t("train.newSession") : t("train.startSession")}
+                    <span className="desktop-label">{sessionActionLabel}</span>
+                    <span className="mobile-label">{compactSessionActionLabel}</span>
                   </button>
                 ) : (
                   <button className="ghost-button" onClick={resetSession} type="button">

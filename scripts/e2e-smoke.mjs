@@ -4,6 +4,7 @@ import { chromium, devices } from "@playwright/test";
 
 const baseURL = "http://localhost:4173";
 const serverOutput = [];
+const startSessionButtonName = /开始本局|开始|Start session|Start/;
 
 function startPreview() {
   const child = spawn(
@@ -89,6 +90,49 @@ async function assertResponseButtonContentFits(page, testName) {
 
   if (failures.length > 0) {
     throw new Error(`${testName}: response button content overflows: ${failures.join(", ")}`);
+  }
+}
+
+async function assertTrialStatusFits(page, testName) {
+  if (testName !== "mobile") {
+    return;
+  }
+
+  const status = await page.locator(".trial-status").evaluate((element) => {
+    const statusBox = element.getBoundingClientRect();
+    const visibleChildren = [...element.children]
+      .map((child) => {
+        const style = getComputedStyle(child);
+        const box = child.getBoundingClientRect();
+        if (style.display === "none" || style.visibility === "hidden" || box.width === 0 || box.height === 0) {
+          return null;
+        }
+
+        return {
+          text: child.textContent?.trim() || child.tagName,
+          left: box.left,
+          right: box.right,
+          centerY: box.top + box.height / 2
+        };
+      })
+      .filter(Boolean);
+
+    return {
+      left: statusBox.left,
+      right: statusBox.right,
+      visibleChildren
+    };
+  });
+
+  const overflows = status.visibleChildren.filter((child) => child.left < status.left - 1 || child.right > status.right + 1);
+  if (overflows.length > 0) {
+    throw new Error(`${testName}: trial status content overflows: ${overflows.map((child) => child.text).join(", ")}`);
+  }
+
+  const firstChild = status.visibleChildren[0];
+  const wraps = Boolean(firstChild && status.visibleChildren.some((child) => Math.abs(child.centerY - firstChild.centerY) > 4));
+  if (wraps) {
+    throw new Error(`${testName}: trial status content should stay on one row.`);
   }
 }
 
@@ -236,12 +280,14 @@ async function runCase(browser, name, contextOptions) {
   });
 
   await page.goto(baseURL, { waitUntil: "networkidle" });
-  const startButton = page.getByRole("button", { name: /开始本局|Start session/ });
+  const startButton = page.getByRole("button", { name: startSessionButtonName });
   await startButton.waitFor();
+  await assertTrialStatusFits(page, name);
   await assertInViewport(page, name, page.locator(".stimulus-surface").first(), "stimulus surface");
   await assertInViewport(page, name, startButton, "start button");
   await startButton.click();
-  await page.getByText(/试次 1|Trial 1/).waitFor();
+  await page.locator(".trial-status .trial-label:visible").filter({ hasText: /试次 1|Trial 1|1\/\d+/ }).waitFor();
+  await assertTrialStatusFits(page, name);
   const positionButton = page.getByRole("button", { name: /位置 匹配|Position match/ });
   await positionButton.waitFor();
   await assertInViewport(page, name, positionButton, "position response button");
@@ -321,11 +367,11 @@ async function runCase(browser, name, contextOptions) {
   }
   await applyDialog.accept();
   await leaveModesPromise;
-  await page.getByRole("button", { name: /开始本局|Start session/ }).waitFor();
+  await page.getByRole("button", { name: startSessionButtonName }).waitFor();
   if ((await page.locator(".stimulus-grid").count()) !== 0) {
     throw new Error(`${name}: color/audio mode should not render the position grid.`);
   }
-  await page.getByRole("button", { name: /开始本局|Start session/ }).click();
+  await page.getByRole("button", { name: startSessionButtonName }).click();
   await page.waitForTimeout(100);
   if ((await page.locator(".color-token").count()) === 0) {
     throw new Error(`${name}: color/audio mode did not render a color stimulus.`);
@@ -342,7 +388,7 @@ async function runCase(browser, name, contextOptions) {
     window.__frequencies = [];
   });
   await clickNav(page, name, /训练|Train/);
-  await page.getByRole("button", { name: /开始本局|Start session/ }).click();
+  await page.getByRole("button", { name: startSessionButtonName }).click();
   await page.waitForTimeout(100);
   const customShortcutButton = page.getByRole("button", { name: /位置 匹配|Position match/ });
   await page.keyboard.press("KeyH");

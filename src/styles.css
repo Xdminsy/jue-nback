@@ -388,6 +388,11 @@ button:disabled {
   align-items: stretch;
 }
 
+.mobile-label,
+.trial-label-compact {
+  display: none;
+}
+
 .pill,
 .channel-badge {
   display: inline-flex;
@@ -563,11 +568,22 @@ button:disabled {
 
 .trial-status {
   min-height: 42px;
+  min-width: 0;
   color: var(--muted);
 }
 
+.trial-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .trial-status strong {
+  flex: 0 0 auto;
   color: var(--text);
+  white-space: nowrap;
 }
 
 .response-grid {
@@ -1256,6 +1272,16 @@ button:disabled {
     display: none;
   }
 
+  .desktop-label,
+  .trial-label-full {
+    display: none;
+  }
+
+  .mobile-label,
+  .trial-label-compact {
+    display: inline;
+  }
+
   .training-layout,
   .settings-grid {
     grid-template-columns: 1fr;
@@ -1287,9 +1313,16 @@ button:disabled {
 
   .train-page .trial-status {
     min-height: 42px;
+    min-width: 0;
     align-items: center;
     flex-direction: row;
+    gap: 8px;
     font-size: 0.9rem;
+  }
+
+  .session-action .primary-button {
+    min-width: 92px;
+    padding: 0 14px;
   }
 
   .practice-controls .response-grid {
