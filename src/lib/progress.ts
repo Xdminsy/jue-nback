@@ -1,4 +1,5 @@
 import { STIMULUS_CHANNELS, type ChannelScore, type SessionRecord, type StimulusChannel } from "../types";
+import { DEFAULT_DAILY_SESSION_GOAL, normalizeDailySessionGoal } from "./dailyGoal";
 
 export type DayBucket = {
   date: string;
@@ -11,6 +12,9 @@ export type DayBucket = {
 export type DashboardStats = {
   totalSessions: number;
   totalMinutes: number;
+  todaySessions: number;
+  dailySessionGoal: number;
+  todayGoalComplete: boolean;
   streakDays: number;
   bestN: number;
   recommendedN: number;
@@ -123,8 +127,8 @@ function aggregateChannelScores(sessions: SessionRecord[]): Record<StimulusChann
   return aggregate;
 }
 
-function buildBuckets(sessions: SessionRecord[], days: number): DayBucket[] {
-  const today = new Date();
+function buildBuckets(sessions: SessionRecord[], days: number, now = new Date()): DayBucket[] {
+  const today = now;
   const start = addDays(today, -(days - 1));
   const buckets = new Map<string, DayBucket>();
 
@@ -164,9 +168,17 @@ function buildBuckets(sessions: SessionRecord[], days: number): DayBucket[] {
   return [...buckets.values()];
 }
 
-function computeStreak(sessions: SessionRecord[]): number {
+function countSessionsOnDate(sessions: SessionRecord[], date: Date): number {
+  const targetKey = dateKey(date);
+  return sessions.filter((session) => {
+    const startedAt = new Date(session.startedAt);
+    return !Number.isNaN(startedAt.getTime()) && dateKey(startedAt) === targetKey;
+  }).length;
+}
+
+function computeStreak(sessions: SessionRecord[], now = new Date()): number {
   const trainedDays = new Set(sessions.map((session) => dateKey(new Date(session.startedAt))));
-  let cursor = new Date();
+  let cursor = new Date(now);
   let streak = 0;
 
   while (trainedDays.has(dateKey(cursor))) {
@@ -177,11 +189,17 @@ function computeStreak(sessions: SessionRecord[]): number {
   return streak;
 }
 
-export function buildDashboardStats(sessions: SessionRecord[]): DashboardStats {
+export function buildDashboardStats(
+  sessions: SessionRecord[],
+  dailySessionGoal = DEFAULT_DAILY_SESSION_GOAL,
+  now = new Date()
+): DashboardStats {
   const sorted = [...sessions].sort((a, b) => a.startedAt.localeCompare(b.startedAt));
   const latest = sorted.length > 0 ? sorted[sorted.length - 1] : undefined;
   const totalMinutes = sessions.reduce((total, session) => total + numberOr(session.durationMs) / 60000, 0);
   const bestN = sessions.reduce((best, session) => Math.max(best, numberOr(session.nBefore), numberOr(session.nAfter)), 0);
+  const normalizedDailySessionGoal = normalizeDailySessionGoal(dailySessionGoal);
+  const todaySessions = countSessionsOnDate(sessions, now);
   const averageAccuracy =
     sessions.length > 0
       ? sessions.reduce((total, session) => total + numberOr(session.overallAccuracy), 0) / sessions.length
@@ -190,12 +208,15 @@ export function buildDashboardStats(sessions: SessionRecord[]): DashboardStats {
   return {
     totalSessions: sessions.length,
     totalMinutes,
-    streakDays: computeStreak(sessions),
+    todaySessions,
+    dailySessionGoal: normalizedDailySessionGoal,
+    todayGoalComplete: todaySessions >= normalizedDailySessionGoal,
+    streakDays: computeStreak(sessions, now),
     bestN,
     recommendedN: numberOr(latest?.nAfter, 2),
     averageAccuracy,
-    recentTrend: buildBuckets(sessions, 30),
-    heatmap: buildBuckets(sessions, 42),
+    recentTrend: buildBuckets(sessions, 30, now),
+    heatmap: buildBuckets(sessions, 42, now),
     channelScores: aggregateChannelScores(sessions)
   };
 }

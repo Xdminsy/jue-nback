@@ -21,13 +21,16 @@ export function AppShell() {
   const navigate = useNavigate();
   const running = useSessionStore((state) => state.running);
   const pendingSettingsDraft = useSessionStore((state) => state.pendingSettingsDraft);
+  const pendingDailySessionGoal = useSessionStore((state) => state.pendingDailySessionGoal);
   const setConfig = useSessionStore((state) => state.setConfig);
+  const setDailySessionGoal = useSessionStore((state) => state.setDailySessionGoal);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const trainingLocked = Boolean(running && running.phase !== "complete");
-  const hasPendingSettings = location.pathname === "/settings" && Boolean(pendingSettingsDraft);
+  const hasPendingSettings =
+    location.pathname === "/settings" && (Boolean(pendingSettingsDraft) || pendingDailySessionGoal !== null);
 
   const confirmSettingsNavigation = useCallback(() => {
-    if (!hasPendingSettings || !pendingSettingsDraft) {
+    if (!hasPendingSettings) {
       return true;
     }
 
@@ -35,9 +38,16 @@ export function AppShell() {
       return false;
     }
 
-    setConfig(pendingSettingsDraft);
+    if (pendingSettingsDraft) {
+      setConfig(pendingSettingsDraft);
+    }
+
+    if (pendingDailySessionGoal !== null) {
+      setDailySessionGoal(pendingDailySessionGoal);
+    }
+
     return true;
-  }, [hasPendingSettings, pendingSettingsDraft, setConfig, t]);
+  }, [hasPendingSettings, pendingDailySessionGoal, pendingSettingsDraft, setConfig, setDailySessionGoal, t]);
 
   useEffect(() => {
     if (trainingLocked && location.pathname !== "/train") {

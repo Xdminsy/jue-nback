@@ -8,9 +8,11 @@ import { ResponseButtons } from "../components/ResponseButtons";
 import { VisualStimulus } from "../components/VisualStimulus";
 import { getPreset } from "../lib/channels";
 import { playStimulusAudio, primeAudio } from "../lib/audio";
+import { buildDashboardStats } from "../lib/progress";
 import { keyboardEventMatchesResponseKey, responseKeyAt } from "../lib/responseKeys";
 import { saveSession } from "../lib/storage";
 import { useSessionStore } from "../store/sessionStore";
+import { useSessions } from "../hooks/useSessions";
 import type { StimulusChannel } from "../types";
 import { formatDuration, formatPercent } from "../utils/format";
 
@@ -29,6 +31,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 
 export function TrainPage() {
   const { t } = useTranslation();
+  const { sessions } = useSessions();
   const {
     config,
     running,
@@ -37,7 +40,8 @@ export function TrainPage() {
     showResponseWindow,
     advanceTrial,
     resetSession,
-    markSaved
+    markSaved,
+    dailySessionGoal
   } = useSessionStore();
   const savingRef = useRef(false);
   const playedAudioKeyRef = useRef<string | null>(null);
@@ -124,6 +128,13 @@ export function TrainPage() {
   const compactTrialLabel = running ? t("train.trialShort", { current, total }) : modeLabel;
   const sessionActionLabel = running?.phase === "complete" ? t("train.newSession") : t("train.startSession");
   const compactSessionActionLabel = running?.phase === "complete" ? t("train.newSessionShort") : t("common.start");
+  const summary = running?.summary;
+  const sessionsWithCurrent = summary ? [summary, ...sessions.filter((session) => session.id !== summary.id)] : sessions;
+  const dailyStats = buildDashboardStats(sessionsWithCurrent, dailySessionGoal);
+  const remainingSessions = Math.max(0, dailyStats.dailySessionGoal - dailyStats.todaySessions);
+  const todayDetail = dailyStats.todayGoalComplete
+    ? t("stats.todayGoalComplete")
+    : t("stats.remainingSessions", { count: remainingSessions });
 
   return (
     <div className="page-flow train-page">
@@ -194,9 +205,14 @@ export function TrainPage() {
 
         <aside className="training-side">
           {running?.summary ? (
-            <SessionResult channels={config.channels} saved={running.saved} />
+            <SessionResult channels={config.channels} dailyStats={dailyStats} saved={running.saved} todayDetail={todayDetail} />
           ) : (
             <>
+              <MetricCard
+                label={t("stats.todayTraining")}
+                value={`${dailyStats.todaySessions}/${dailyStats.dailySessionGoal}`}
+                detail={todayDetail}
+              />
               <MetricCard label={t("settings.trials")} value={config.trials} />
               <MetricCard label={t("settings.matchRate")} value={formatPercent(config.matchRate)} />
               <MetricCard
@@ -212,7 +228,17 @@ export function TrainPage() {
   );
 }
 
-function SessionResult({ channels, saved }: { channels: StimulusChannel[]; saved: boolean }) {
+function SessionResult({
+  channels,
+  dailyStats,
+  saved,
+  todayDetail
+}: {
+  channels: StimulusChannel[];
+  dailyStats: ReturnType<typeof buildDashboardStats>;
+  saved: boolean;
+  todayDetail: string;
+}) {
   const { t } = useTranslation();
   const summary = useSessionStore((state) => state.running?.summary);
 
@@ -238,6 +264,11 @@ function SessionResult({ channels, saved }: { channels: StimulusChannel[]; saved
       <div className="metric-grid compact">
         <MetricCard label={t("common.bestN")} value={summary.nBefore} detail={`${summary.nBefore} -> ${summary.nAfter}`} />
         <MetricCard label={t("common.minutes")} value={formatDuration(summary.durationMs)} />
+        <MetricCard
+          label={t("stats.todayTraining")}
+          value={`${dailyStats.todaySessions}/${dailyStats.dailySessionGoal}`}
+          detail={todayDetail}
+        />
       </div>
 
       <div className="score-list">

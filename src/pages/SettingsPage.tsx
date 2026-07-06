@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ChannelBadge } from "../components/ChannelBadge";
 import { PageHeader } from "../components/PageHeader";
 import { CHANNEL_DEFINITIONS, MODE_PRESETS, configFromPreset, ensureValidChannels } from "../lib/channels";
+import { MAX_DAILY_SESSION_GOAL, MIN_DAILY_SESSION_GOAL, normalizeDailySessionGoal } from "../lib/dailyGoal";
 import { jaeggiBlockTrialCount } from "../lib/protocol";
 import { normalizeResponseKey, responseKeyAt } from "../lib/responseKeys";
 import { normalizeConfig, useSessionStore } from "../store/sessionStore";
@@ -14,15 +15,21 @@ import { formatPercent } from "../utils/format";
 export function SettingsPage() {
   const { t } = useTranslation();
   const storedConfig = useSessionStore((state) => state.config);
+  const storedDailySessionGoal = useSessionStore((state) => state.dailySessionGoal);
   const setConfig = useSessionStore((state) => state.setConfig);
+  const setDailySessionGoal = useSessionStore((state) => state.setDailySessionGoal);
   const setPendingSettingsDraft = useSessionStore((state) => state.setPendingSettingsDraft);
+  const setPendingDailySessionGoal = useSessionStore((state) => state.setPendingDailySessionGoal);
   const [draft, setDraft] = useState<SessionConfig>(storedConfig);
+  const [dailyGoalDraft, setDailyGoalDraft] = useState(storedDailySessionGoal);
   const [saved, setSaved] = useState(false);
   const normalizedDraft = useMemo(() => normalizeConfig(draft), [draft]);
-  const hasPendingChanges = useMemo(
+  const normalizedDailyGoalDraft = useMemo(() => normalizeDailySessionGoal(dailyGoalDraft), [dailyGoalDraft]);
+  const configHasPendingChanges = useMemo(
     () => configKey(draft) !== configKey(storedConfig),
     [draft, storedConfig]
   );
+  const dailyGoalHasPendingChanges = normalizedDailyGoalDraft !== storedDailySessionGoal;
 
   const selectedPreset = useMemo(
     () => MODE_PRESETS.find((preset) => preset.id === draft.modeName),
@@ -30,13 +37,26 @@ export function SettingsPage() {
   );
 
   useEffect(() => {
-    setPendingSettingsDraft(hasPendingChanges ? normalizedDraft : null);
-    return () => setPendingSettingsDraft(null);
-  }, [hasPendingChanges, normalizedDraft, setPendingSettingsDraft]);
+    setPendingSettingsDraft(configHasPendingChanges ? normalizedDraft : null);
+    setPendingDailySessionGoal(dailyGoalHasPendingChanges ? normalizedDailyGoalDraft : null);
+    return () => {
+      setPendingSettingsDraft(null);
+      setPendingDailySessionGoal(null);
+    };
+  }, [
+    configHasPendingChanges,
+    dailyGoalHasPendingChanges,
+    normalizedDailyGoalDraft,
+    normalizedDraft,
+    setPendingDailySessionGoal,
+    setPendingSettingsDraft
+  ]);
 
   const apply = () => {
     setConfig(normalizedDraft);
+    setDailySessionGoal(normalizedDailyGoalDraft);
     setDraft(normalizedDraft);
+    setDailyGoalDraft(normalizedDailyGoalDraft);
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1800);
   };
@@ -111,6 +131,14 @@ export function SettingsPage() {
           </label>
 
           {selectedPreset ? <p className="muted">{t(selectedPreset.descriptionKey)}</p> : null}
+
+          <NumberStepper
+            label={t("settings.dailyGoal")}
+            max={MAX_DAILY_SESSION_GOAL}
+            min={MIN_DAILY_SESSION_GOAL}
+            value={dailyGoalDraft}
+            onChange={setDailyGoalDraft}
+          />
 
           <div className="channel-toggle-grid">
             {STIMULUS_CHANNELS.map((channel) => {
@@ -255,24 +283,34 @@ function NumberStepper({
   label,
   value,
   min,
+  max,
   step = 1,
   onChange
 }: {
   label: string;
   value: number;
   min: number;
+  max?: number;
   step?: number;
   onChange: (value: number) => void;
 }) {
+  const clamp = (next: number) => Math.min(max ?? Number.POSITIVE_INFINITY, Math.max(min, next));
+
   return (
     <label className="field">
       <span>{label}</span>
       <div className="stepper">
-        <button onClick={() => onChange(Math.max(min, value - step))} title="Decrease" type="button">
+        <button onClick={() => onChange(clamp(value - step))} title="Decrease" type="button">
           <Minus size={16} />
         </button>
-        <input min={min} onChange={(event) => onChange(Number(event.target.value))} type="number" value={value} />
-        <button onClick={() => onChange(value + step)} title="Increase" type="button">
+        <input
+          max={max}
+          min={min}
+          onChange={(event) => onChange(clamp(Number(event.target.value)))}
+          type="number"
+          value={value}
+        />
+        <button onClick={() => onChange(clamp(value + step))} title="Increase" type="button">
           <Plus size={16} />
         </button>
       </div>

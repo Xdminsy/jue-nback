@@ -4,19 +4,30 @@ import { MetricCard } from "../components/MetricCard";
 import { PageHeader } from "../components/PageHeader";
 import { buildDashboardStats, type DayBucket } from "../lib/progress";
 import { useSessions } from "../hooks/useSessions";
+import { useSessionStore } from "../store/sessionStore";
 import { STIMULUS_CHANNELS } from "../types";
 import { formatMinutes, formatPercent } from "../utils/format";
 
 export function ProgressPage() {
   const { t } = useTranslation();
   const { sessions, loading } = useSessions();
-  const stats = buildDashboardStats(sessions);
+  const dailySessionGoal = useSessionStore((state) => state.dailySessionGoal);
+  const stats = buildDashboardStats(sessions, dailySessionGoal);
+  const remainingSessions = Math.max(0, stats.dailySessionGoal - stats.todaySessions);
+  const todayDetail = stats.todayGoalComplete
+    ? t("stats.todayGoalComplete")
+    : t("stats.remainingSessions", { count: remainingSessions });
 
   return (
     <div className="page-flow">
       <PageHeader title={t("stats.title")} subtitle={t("stats.subtitle")} />
 
       <section className="metric-grid">
+        <MetricCard
+          label={t("stats.todayTraining")}
+          value={`${stats.todaySessions}/${stats.dailySessionGoal}`}
+          detail={todayDetail}
+        />
         <MetricCard label={t("common.sessions")} value={stats.totalSessions} />
         <MetricCard label={t("common.minutes")} value={formatMinutes(stats.totalMinutes)} />
         <MetricCard label={t("common.streak")} value={stats.streakDays} />

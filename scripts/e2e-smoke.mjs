@@ -282,6 +282,7 @@ async function runCase(browser, name, contextOptions) {
   await page.goto(baseURL, { waitUntil: "networkidle" });
   const startButton = page.getByRole("button", { name: startSessionButtonName });
   await startButton.waitFor();
+  await page.locator(".training-side .metric-card").filter({ hasText: /今日训练|Today/ }).filter({ hasText: /0\/10/ }).waitFor();
   await assertTrialStatusFits(page, name);
   await assertInViewport(page, name, page.locator(".stimulus-surface").first(), "stimulus surface");
   await assertInViewport(page, name, startButton, "start button");
@@ -340,10 +341,12 @@ async function runCase(browser, name, contextOptions) {
   await page.getByRole("button", { name: /停止|Stop/ }).click();
   await clickNav(page, name, /统计|Stats/);
   await page.getByRole("heading", { name: /统计面板|Stats/ }).waitFor();
+  await page.locator(".metric-card").filter({ hasText: /今日训练|Today/ }).filter({ hasText: /0\/10/ }).waitFor();
   await clickNav(page, name, /模式|Modes/);
   const applyButton = page.getByRole("button", { name: /应用|Apply/ });
   const presetSelect = page.locator(".settings-grid .panel select").first();
   await applyButton.waitFor();
+  await page.getByText(/每日目标|Daily goal/).waitFor();
   const applyBox = await applyButton.boundingBox();
   const viewport = page.viewportSize();
   if (!applyBox || !viewport || applyBox.y < 0 || applyBox.y + applyBox.height > viewport.height) {

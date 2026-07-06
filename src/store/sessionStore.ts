@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DEFAULT_CONFIG, ensureValidChannels } from "../lib/channels";
+import { DEFAULT_DAILY_SESSION_GOAL, normalizeDailySessionGoal } from "../lib/dailyGoal";
 import { generateTrials } from "../lib/engine";
 import { jaeggiBlockTrialCount } from "../lib/protocol";
 import { normalizeResponseKeys } from "../lib/responseKeys";
@@ -24,10 +25,14 @@ type RunningSession = {
 
 type SessionStore = {
   config: SessionConfig;
+  dailySessionGoal: number;
   pendingSettingsDraft: SessionConfig | null;
+  pendingDailySessionGoal: number | null;
   running: RunningSession | null;
   setConfig: (config: SessionConfig) => void;
+  setDailySessionGoal: (goal: number) => void;
   setPendingSettingsDraft: (config: SessionConfig | null) => void;
+  setPendingDailySessionGoal: (goal: number | null) => void;
   updateConfig: (patch: Partial<SessionConfig>) => void;
   startSession: () => void;
   recordResponse: (channel: StimulusChannel) => void;
@@ -73,10 +78,16 @@ export const useSessionStore = create<SessionStore>()(
   persist(
     (set, get) => ({
       config: DEFAULT_CONFIG,
+      dailySessionGoal: DEFAULT_DAILY_SESSION_GOAL,
       pendingSettingsDraft: null,
+      pendingDailySessionGoal: null,
       running: null,
       setConfig: (config) => set({ config: normalizeConfig(config), pendingSettingsDraft: null }),
+      setDailySessionGoal: (goal) =>
+        set({ dailySessionGoal: normalizeDailySessionGoal(goal), pendingDailySessionGoal: null }),
       setPendingSettingsDraft: (config) => set({ pendingSettingsDraft: config ? normalizeConfig(config) : null }),
+      setPendingDailySessionGoal: (goal) =>
+        set({ pendingDailySessionGoal: goal === null ? null : normalizeDailySessionGoal(goal) }),
       updateConfig: (patch) =>
         set((state) => ({
           config: normalizeConfig({ ...state.config, ...patch })
@@ -205,7 +216,15 @@ export const useSessionStore = create<SessionStore>()(
     }),
     {
       name: "jue-nback-session",
-      partialize: (state) => ({ config: state.config })
+      merge: (persisted, current) => {
+        const persistedState = persisted as Partial<SessionStore> | undefined;
+        return {
+          ...current,
+          ...persistedState,
+          dailySessionGoal: normalizeDailySessionGoal(persistedState?.dailySessionGoal)
+        };
+      },
+      partialize: (state) => ({ config: state.config, dailySessionGoal: state.dailySessionGoal })
     }
   )
 );
