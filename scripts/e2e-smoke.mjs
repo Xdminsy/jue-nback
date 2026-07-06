@@ -161,6 +161,29 @@ async function assertResponseButtonsSplitHorizontally(page, testName) {
   }
 }
 
+async function assertMobileTrainingChrome(page, testName) {
+  if (testName !== "mobile") {
+    return;
+  }
+
+  const sideVisible = await page.locator(".train-page .training-side").isVisible();
+  if (sideVisible) {
+    throw new Error(`${testName}: training side metrics should be hidden on mobile training view.`);
+  }
+}
+
+async function assertMobilePracticeControlsDocked(page, testName) {
+  if (testName !== "mobile") {
+    return;
+  }
+
+  const controlsBox = await page.locator(".practice-controls").boundingBox();
+  const viewport = page.viewportSize();
+  if (!controlsBox || !viewport || controlsBox.y + controlsBox.height < viewport.height - 32) {
+    throw new Error(`${testName}: practice controls should stay near the bottom of the viewport.`);
+  }
+}
+
 async function pressFirstTwoResponsesTogether(page, testName) {
   if (testName !== "mobile") {
     return false;
@@ -282,7 +305,8 @@ async function runCase(browser, name, contextOptions) {
   await page.goto(baseURL, { waitUntil: "networkidle" });
   const startButton = page.getByRole("button", { name: startSessionButtonName });
   await startButton.waitFor();
-  await page.locator(".training-side .metric-card").filter({ hasText: /今日训练|Today/ }).filter({ hasText: /0\/10/ }).waitFor();
+  await page.locator(".train-page").filter({ hasText: /今日训练|Today/ }).filter({ hasText: /0\/10/ }).waitFor();
+  await assertMobileTrainingChrome(page, name);
   await assertTrialStatusFits(page, name);
   await assertInViewport(page, name, page.locator(".stimulus-surface").first(), "stimulus surface");
   await assertInViewport(page, name, startButton, "start button");
@@ -291,6 +315,7 @@ async function runCase(browser, name, contextOptions) {
   await assertTrialStatusFits(page, name);
   const positionButton = page.getByRole("button", { name: /位置 匹配|Position match/ });
   await positionButton.waitFor();
+  await assertMobilePracticeControlsDocked(page, name);
   await assertInViewport(page, name, positionButton, "position response button");
   await assertResponseButtonContentFits(page, name);
   await assertResponseButtonsSplitHorizontally(page, name);

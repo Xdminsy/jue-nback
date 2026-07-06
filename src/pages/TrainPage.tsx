@@ -129,6 +129,9 @@ export function TrainPage() {
   const sessionActionLabel = running?.phase === "complete" ? t("train.newSession") : t("train.startSession");
   const compactSessionActionLabel = running?.phase === "complete" ? t("train.newSessionShort") : t("common.start");
   const summary = running?.summary;
+  const trainPageClassName = ["page-flow train-page", summary ? "has-session-result" : null]
+    .filter(Boolean)
+    .join(" ");
   const sessionsWithCurrent = summary ? [summary, ...sessions.filter((session) => session.id !== summary.id)] : sessions;
   const dailyStats = buildDashboardStats(sessionsWithCurrent, dailySessionGoal);
   const remainingSessions = Math.max(0, dailyStats.dailySessionGoal - dailyStats.todaySessions);
@@ -137,7 +140,7 @@ export function TrainPage() {
     : t("stats.remainingSessions", { count: remainingSessions });
 
   return (
-    <div className="page-flow train-page">
+    <div className={trainPageClassName}>
       <PageHeader title={t("train.title")} subtitle={t("train.subtitle")} />
 
       <section className="training-layout">
@@ -152,6 +155,9 @@ export function TrainPage() {
               </div>
             </div>
             <div className="toolbar-actions">
+              <span className="pill mobile-daily-progress">
+                {t("stats.todayTraining")} {dailyStats.todaySessions}/{dailyStats.dailySessionGoal}
+              </span>
               <span className="pill">{t("train.nBack", { n: config.n })}</span>
               <span className="pill">{config.adaptive ? t("common.adaptive") : t("common.fixed")}</span>
             </div>
