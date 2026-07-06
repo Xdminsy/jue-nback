@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import clsx from "clsx";
 import { CHANNEL_DEFINITIONS } from "../lib/channels";
+import { responseKeyAt } from "../lib/responseKeys";
 import type { ChannelMap, StimulusChannel } from "../types";
 import { ChannelBadge } from "./ChannelBadge";
 
@@ -9,15 +10,17 @@ type ResponseButtonsProps = {
   channels: StimulusChannel[];
   disabled: boolean;
   onRespond: (channel: StimulusChannel) => void;
+  responseKeys: string[];
 };
 
-export function ResponseButtons({ answeredChannels = {}, channels, disabled, onRespond }: ResponseButtonsProps) {
+export function ResponseButtons({ answeredChannels = {}, channels, disabled, onRespond, responseKeys }: ResponseButtonsProps) {
   const { t } = useTranslation();
 
   return (
     <div className="response-grid">
-      {channels.map((channel) => {
+      {channels.map((channel, index) => {
         const definition = CHANNEL_DEFINITIONS[channel];
+        const responseKey = responseKeyAt({ responseKeys }, index);
         const answered = Boolean(answeredChannels[channel]);
         return (
           <button
@@ -26,12 +29,12 @@ export function ResponseButtons({ answeredChannels = {}, channels, disabled, onR
             disabled={disabled}
             key={channel}
             onClick={() => onRespond(channel)}
-            title={`${t(definition.labelKey)} (${definition.responseKey})`}
+            title={`${t(definition.labelKey)} (${responseKey})`}
             type="button"
           >
             <ChannelBadge channel={channel} compact />
             <span>{t("train.pressMatch", { channel: t(definition.shortLabelKey) })}</span>
-            <kbd>{definition.responseKey}</kbd>
+            <kbd>{responseKey}</kbd>
           </button>
         );
       })}

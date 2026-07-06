@@ -1,6 +1,6 @@
-import { Activity, BarChart3, BrainCircuit, Database, History, SlidersHorizontal } from "lucide-react";
+import { Activity, BarChart3, BrainCircuit, Database, History, Menu, SlidersHorizontal, X } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import clsx from "clsx";
 import { InstallButton } from "./InstallButton";
@@ -22,6 +22,7 @@ export function AppShell() {
   const running = useSessionStore((state) => state.running);
   const pendingSettingsDraft = useSessionStore((state) => state.pendingSettingsDraft);
   const setConfig = useSessionStore((state) => state.setConfig);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const trainingLocked = Boolean(running && running.phase !== "complete");
   const hasPendingSettings = location.pathname === "/settings" && Boolean(pendingSettingsDraft);
 
@@ -43,6 +44,10 @@ export function AppShell() {
       navigate("/train", { replace: true });
     }
   }, [location.pathname, navigate, trainingLocked]);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!trainingLocked) {
@@ -75,6 +80,17 @@ export function AppShell() {
   return (
     <div className="app-shell">
       <header className="mobile-topbar">
+        <button
+          aria-controls="primary-navigation"
+          aria-expanded={mobileNavOpen}
+          aria-label={t(mobileNavOpen ? "nav.closeMenu" : "nav.openMenu")}
+          className="mobile-menu-button"
+          onClick={() => setMobileNavOpen((open) => !open)}
+          type="button"
+        >
+          {mobileNavOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+
         <div className="brand">
           <div className="brand-mark" aria-hidden="true">
             <BrainCircuit size={22} />
@@ -90,7 +106,7 @@ export function AppShell() {
         </div>
       </header>
 
-      <aside className="sidebar">
+      <aside className={clsx("sidebar", mobileNavOpen && "mobile-open")} id="primary-navigation">
         <div className="brand">
           <div className="brand-mark" aria-hidden="true">
             <BrainCircuit size={24} />
@@ -118,7 +134,10 @@ export function AppShell() {
 
                   if (item.to !== location.pathname && !confirmSettingsNavigation()) {
                     event.preventDefault();
+                    return;
                   }
+
+                  setMobileNavOpen(false);
                 }}
                 title={locked ? t("train.navigationLocked") : undefined}
                 to={item.to}

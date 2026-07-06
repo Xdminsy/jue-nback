@@ -85,6 +85,10 @@ button:disabled {
   display: none;
 }
 
+.mobile-menu-button {
+  display: none;
+}
+
 .sidebar {
   position: sticky;
   top: 0;
@@ -586,6 +590,7 @@ button:disabled {
 }
 
 .response-button {
+  position: relative;
   min-height: 76px;
   flex-direction: column;
   padding: 10px;
@@ -741,6 +746,31 @@ button:disabled {
 
 .settings-wide-field {
   grid-column: 1 / -1;
+}
+
+.response-key-settings {
+  display: grid;
+  gap: 8px;
+}
+
+.response-key-settings > span {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.response-key-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
+}
+
+.response-key-field {
+  margin-bottom: 0;
+}
+
+.response-key-input {
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .field > span,
@@ -1028,7 +1058,6 @@ button:disabled {
 @media (max-width: 860px) {
   .app-shell {
     display: block;
-    padding-bottom: 74px;
   }
 
   .mobile-topbar {
@@ -1039,7 +1068,8 @@ button:disabled {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 10px 14px;
+    min-height: 62px;
+    padding: 9px 14px;
     border-bottom: 1px solid var(--line);
     background: rgb(255 250 240 / 94%);
     backdrop-filter: blur(10px);
@@ -1050,21 +1080,33 @@ button:disabled {
     height: 38px;
   }
 
+  .mobile-topbar .brand {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
   .mobile-topbar .brand strong {
+    overflow: hidden;
     font-size: 0.95rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .mobile-topbar .brand span {
-    font-size: 0.75rem;
+    display: none;
   }
 
   .mobile-topbar .language-switcher {
-    min-width: 116px;
+    min-width: 112px;
+  }
+
+  .mobile-topbar .language-switcher select {
+    min-height: 40px;
   }
 
   .mobile-topbar .ghost-button {
-    width: 44px;
-    min-width: 44px;
+    width: 42px;
+    min-width: 42px;
     padding: 0 10px;
     font-size: 0;
     gap: 0;
@@ -1075,15 +1117,29 @@ button:disabled {
     height: 18px;
   }
 
+  .mobile-menu-button {
+    width: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    color: var(--text);
+    background: #fffdf8;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+
   .sidebar {
     position: fixed;
-    inset: auto 0 0 0;
-    z-index: 20;
+    inset: calc(62px + env(safe-area-inset-top)) 10px auto 10px;
+    z-index: 21;
     height: auto;
-    display: block;
-    padding: 8px 10px;
-    border-top: 1px solid var(--line);
-    border-right: 0;
+    display: none;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 18px 45px rgb(35 31 25 / 18%);
   }
 
   .sidebar > .brand,
@@ -1091,27 +1147,31 @@ button:disabled {
     display: none;
   }
 
+  .sidebar.mobile-open {
+    display: block;
+  }
+
   .nav-list {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 4px;
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
 
   .nav-link {
-    min-height: 56px;
-    flex-direction: column;
-    justify-content: center;
-    gap: 3px;
-    padding: 4px;
-    font-size: 0.75rem;
+    min-height: 46px;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 0 12px;
+    font-size: 0.92rem;
   }
 
   .content {
-    padding: 18px;
+    padding: 14px;
   }
 
   .settings-page {
-    padding-bottom: 68px;
+    padding-bottom: 78px;
   }
 
   .settings-heading {
@@ -1123,7 +1183,7 @@ button:disabled {
   .settings-apply-button {
     position: fixed;
     right: 18px;
-    bottom: calc(86px + env(safe-area-inset-bottom));
+    bottom: calc(18px + env(safe-area-inset-bottom));
     left: 18px;
     z-index: 19;
     width: auto;
@@ -1133,15 +1193,21 @@ button:disabled {
   }
 
   .train-content {
+    min-height: calc(100svh - 62px - env(safe-area-inset-bottom));
     height: auto;
     overflow: visible;
-    padding: 18px;
+    padding: 14px 14px calc(16px + env(safe-area-inset-bottom));
   }
 
   .train-page {
+    min-height: calc(100svh - 92px - env(safe-area-inset-bottom));
     height: auto;
-    grid-template-rows: none;
-    gap: 18px;
+    grid-template-rows: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .train-page > .page-header {
+    display: none;
   }
 
   .train-page .page-header h1 {
@@ -1154,14 +1220,37 @@ button:disabled {
   }
 
   .train-page .training-main {
-    height: auto;
-    grid-template-rows: none;
-    padding: 18px;
-    gap: 14px;
+    height: 100%;
+    grid-template-rows: auto minmax(0, 1fr);
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .train-page .session-toolbar {
+    min-height: 34px;
+    align-items: center;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .train-page .session-toolbar > div:first-child > strong {
+    display: none;
+  }
+
+  .train-page .channel-row,
+  .train-page .toolbar-actions {
+    gap: 8px;
+  }
+
+  .train-page .pill,
+  .train-page .channel-badge {
+    min-height: 30px;
+    padding: 4px 9px;
+    font-size: 0.88rem;
   }
 
   .practice-controls .hint-text {
-    display: block;
+    display: none;
   }
 
   .training-layout,
@@ -1179,17 +1268,30 @@ button:disabled {
   }
 
   .train-page .training-layout {
-    height: auto;
-    align-items: start;
+    height: 100%;
+    align-items: stretch;
   }
 
   .practice-area {
     grid-template-columns: 1fr;
-    grid-template-rows: none;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+
+  .practice-controls {
+    gap: 10px;
+  }
+
+  .train-page .trial-status {
+    min-height: 42px;
+    align-items: center;
+    flex-direction: row;
+    font-size: 0.9rem;
   }
 
   .practice-controls .response-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .session-toolbar,
@@ -1200,13 +1302,17 @@ button:disabled {
   }
 
   .stimulus-surface {
-    height: auto;
-    min-height: 280px;
+    width: 100%;
+    height: min(46svh, calc(100vw - 60px), 360px);
+    min-height: 260px;
+    padding: 12px;
   }
 
   .stimulus-grid {
-    width: min(100%, 320px);
-    height: auto;
+    width: auto;
+    height: 100%;
+    gap: 8px;
+    padding: 8px;
   }
 
   .stimulus-surface.without-position .color-token,
@@ -1221,18 +1327,50 @@ button:disabled {
   }
 
   .response-button {
-    min-height: 84px;
+    min-height: 76px;
   }
 
   .practice-controls .response-button {
-    min-height: 84px;
-    flex-direction: column;
-    justify-content: center;
-    padding: 10px;
+    min-height: 64px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "badge key"
+      "label key";
+    justify-items: start;
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 0.92rem;
+  }
+
+  .practice-controls .response-button .channel-badge {
+    grid-area: badge;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .practice-controls .response-button > span:not(.channel-badge) {
+    grid-area: label;
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
     white-space: normal;
+    border: 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+
+  .practice-controls .response-button kbd {
+    display: none;
   }
 
   .heatmap {
@@ -1261,8 +1399,24 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
+  .practice-controls .response-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .stimulus-grid {
     width: min(100%, 300px);
+    gap: 7px;
+    padding: 7px;
+  }
+
+  .train-page .stimulus-surface {
+    height: min(42svh, calc(100vw - 56px), 320px);
+    min-height: 250px;
+  }
+
+  .train-page .stimulus-grid {
+    width: auto;
+    height: 100%;
     gap: 7px;
     padding: 7px;
   }

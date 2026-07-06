@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DEFAULT_CONFIG, ensureValidChannels } from "../lib/channels";
 import { generateTrials } from "../lib/engine";
+import { normalizeResponseKeys } from "../lib/responseKeys";
 import { finalizeSession } from "../lib/scoring";
 import type { SessionConfig, SessionRecord, StimulusChannel, TrialResult, TrialStimulus } from "../types";
 
@@ -53,7 +54,8 @@ export function normalizeConfig(config: SessionConfig): SessionConfig {
     trials: Math.max(n + 1, Math.floor(config.trials)),
     stimulusMs: Math.max(100, Math.floor(config.stimulusMs)),
     responseMs: Math.max(250, Math.floor(config.responseMs)),
-    matchRate: Math.min(0.75, Math.max(0.05, config.matchRate))
+    matchRate: Math.min(0.75, Math.max(0.05, config.matchRate)),
+    responseKeys: normalizeResponseKeys(config.responseKeys, channels.length)
   };
 }
 

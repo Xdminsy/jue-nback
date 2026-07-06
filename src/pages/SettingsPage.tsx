@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ChannelBadge } from "../components/ChannelBadge";
 import { PageHeader } from "../components/PageHeader";
 import { CHANNEL_DEFINITIONS, MODE_PRESETS, configFromPreset, ensureValidChannels } from "../lib/channels";
+import { normalizeResponseKey, responseKeyAt } from "../lib/responseKeys";
 import { normalizeConfig, useSessionStore } from "../store/sessionStore";
 import { STIMULUS_CHANNELS, type SessionConfig, type StimulusChannel } from "../types";
 import { formatPercent } from "../utils/format";
@@ -41,6 +42,14 @@ export function SettingsPage() {
 
   const setNumber = (key: keyof Pick<SessionConfig, "n" | "trials" | "stimulusMs" | "responseMs">, value: number) => {
     setDraft((current) => ({ ...current, [key]: value }));
+  };
+
+  const setResponseKey = (index: number, value: string) => {
+    setDraft((current) => {
+      const responseKeys = [...(current.responseKeys ?? [])];
+      responseKeys[index] = value ? normalizeResponseKey(value.slice(-1), index) : "";
+      return { ...current, responseKeys };
+    });
   };
 
   const toggleChannel = (channel: StimulusChannel) => {
@@ -184,6 +193,36 @@ export function SettingsPage() {
                 </select>
               </label>
             ) : null}
+
+            <div className="settings-wide-field response-key-settings">
+              <span>{t("settings.responseKeys")}</span>
+              <div className="response-key-grid">
+                {draft.channels.map((channel, index) => {
+                  const definition = CHANNEL_DEFINITIONS[channel];
+                  return (
+                    <label className="field response-key-field" key={`${channel}-${index}`}>
+                      <span>
+                        {t("settings.responseKeySlot", {
+                          slot: index + 1,
+                          channel: t(definition.shortLabelKey)
+                        })}
+                      </span>
+                      <input
+                        aria-label={t("settings.responseKeySlot", {
+                          slot: index + 1,
+                          channel: t(definition.shortLabelKey)
+                        })}
+                        className="response-key-input"
+                        inputMode="text"
+                        maxLength={1}
+                        onChange={(event) => setResponseKey(index, event.target.value)}
+                        value={responseKeyAt(draft, index)}
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </section>

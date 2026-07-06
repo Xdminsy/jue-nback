@@ -7,7 +7,9 @@ export const resources = {
         settings: "模式",
         stats: "统计",
         history: "历史",
-        data: "数据"
+        data: "数据",
+        openMenu: "打开导航",
+        closeMenu: "关闭导航"
       },
       common: {
         start: "开始",
@@ -70,7 +72,9 @@ export const resources = {
         tone: "音调代替",
         auto: "自动语音",
         saved: "设置已应用",
-        applyBeforeLeaving: "模式设置还未应用。是否应用后离开？"
+        applyBeforeLeaving: "模式设置还未应用。是否应用后离开？",
+        responseKeys: "桌面快捷键",
+        responseKeySlot: "第 {{slot}} 个：{{channel}}"
       },
       stats: {
         title: "统计面板",
@@ -142,7 +146,9 @@ export const resources = {
         settings: "Modes",
         stats: "Stats",
         history: "History",
-        data: "Data"
+        data: "Data",
+        openMenu: "Open navigation",
+        closeMenu: "Close navigation"
       },
       common: {
         start: "Start",
@@ -205,7 +211,9 @@ export const resources = {
         tone: "Tone substitute",
         auto: "Auto speech",
         saved: "Settings applied",
-        applyBeforeLeaving: "Mode changes have not been applied. Apply them before leaving?"
+        applyBeforeLeaving: "Mode changes have not been applied. Apply them before leaving?",
+        responseKeys: "Desktop shortcuts",
+        responseKeySlot: "Slot {{slot}}: {{channel}}"
       },
       stats: {
         title: "Stats",

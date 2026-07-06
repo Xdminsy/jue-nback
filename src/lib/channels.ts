@@ -4,7 +4,6 @@ export type ChannelDefinition = {
   id: StimulusChannel;
   labelKey: string;
   shortLabelKey: string;
-  responseKey: string;
   values: Array<string | number>;
 };
 
@@ -13,35 +12,30 @@ export const CHANNEL_DEFINITIONS: Record<StimulusChannel, ChannelDefinition> = {
     id: "position",
     labelKey: "channels.position",
     shortLabelKey: "channels.positionShort",
-    responseKey: "A",
     values: [0, 1, 2, 3, 4, 5, 6, 7, 8]
   },
   "audio-letter": {
     id: "audio-letter",
     labelKey: "channels.audioLetter",
     shortLabelKey: "channels.audioLetterShort",
-    responseKey: "S",
     values: ["B", "C", "F", "H", "K", "L", "Q", "R"]
   },
   "audio-tone": {
     id: "audio-tone",
     labelKey: "channels.audioTone",
     shortLabelKey: "channels.audioToneShort",
-    responseKey: "D",
     values: ["C4", "D4", "E4", "G4", "A4", "C5"]
   },
   "visual-color": {
     id: "visual-color",
     labelKey: "channels.visualColor",
     shortLabelKey: "channels.visualColorShort",
-    responseKey: "F",
     values: ["teal", "coral", "amber", "violet", "lime", "rose"]
   },
   "visual-shape": {
     id: "visual-shape",
     labelKey: "channels.visualShape",
     shortLabelKey: "channels.visualShapeShort",
-    responseKey: "G",
     values: ["circle", "square", "triangle", "diamond", "star", "hexagon"]
   }
 };
@@ -95,7 +89,8 @@ export const DEFAULT_CONFIG: SessionConfig = {
   stimulusMs: 750,
   responseMs: 2250,
   matchRate: 0.3,
-  audioPreference: "auto"
+  audioPreference: "auto",
+  responseKeys: ["J", "K", "L", ";", "F"]
 };
 
 export function getPreset(id: string): ModePreset | undefined {

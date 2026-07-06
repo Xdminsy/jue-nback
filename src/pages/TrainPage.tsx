@@ -6,8 +6,9 @@ import { MetricCard } from "../components/MetricCard";
 import { PageHeader } from "../components/PageHeader";
 import { ResponseButtons } from "../components/ResponseButtons";
 import { VisualStimulus } from "../components/VisualStimulus";
-import { CHANNEL_DEFINITIONS, getPreset } from "../lib/channels";
+import { getPreset } from "../lib/channels";
 import { playStimulusAudio, primeAudio } from "../lib/audio";
+import { keyboardEventMatchesResponseKey, responseKeyAt } from "../lib/responseKeys";
 import { saveSession } from "../lib/storage";
 import { useSessionStore } from "../store/sessionStore";
 import type { StimulusChannel } from "../types";
@@ -84,13 +85,8 @@ export function TrainPage() {
         return;
       }
 
-      const key = event.key.toLowerCase();
-      const codeKey = event.code.startsWith("Key") ? event.code.slice(3).toLowerCase() : "";
-      const channel = config.channels.find(
-        (item) => {
-          const responseKey = CHANNEL_DEFINITIONS[item].responseKey.toLowerCase();
-          return responseKey === key || responseKey === codeKey;
-        }
+      const channel = config.channels.find((item, index) =>
+        keyboardEventMatchesResponseKey(event, responseKeyAt(config, index))
       );
 
       if (channel) {
@@ -101,7 +97,7 @@ export function TrainPage() {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [config.channels, recordResponse, running?.phase]);
+  }, [config, recordResponse, running?.phase]);
 
   useEffect(() => {
     if (!running?.summary || running.saved || savingRef.current) {
@@ -187,6 +183,7 @@ export function TrainPage() {
                 channels={config.channels}
                 disabled={!canRespond}
                 onRespond={recordResponse}
+                responseKeys={config.responseKeys}
               />
 
               <p className="hint-text">{t("train.hitButtons")}</p>
