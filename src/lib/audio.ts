@@ -19,6 +19,14 @@ const FREQUENCIES: Record<string, number> = {
 
 let audioContext: AudioContext | null = null;
 let voicesPromise: Promise<SpeechSynthesisVoice[]> | null = null;
+const letterSampleBuffers = new Map<string, AudioBuffer>();
+
+function decodeAudio(context: AudioContext, buffer: ArrayBuffer): Promise<AudioBuffer> {
+  return new Promise((resolve, reject) => {
+    const result = context.decodeAudioData(buffer.slice(0), resolve, reject);
+    result?.then(resolve, reject);
+  });
+}
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === "undefined") {
@@ -97,6 +105,62 @@ export async function primeAudio(): Promise<void> {
   await loadSpeechVoices(500);
 }
 
+function letterSampleUrl(value: string | number): string | null {
+  const letter = String(value).toUpperCase();
+  if (!Object.prototype.hasOwnProperty.call(FREQUENCIES, letter)) {
+    return null;
+  }
+
+  return `${import.meta.env.BASE_URL}audio/letters/${encodeURIComponent(letter)}.wav`;
+}
+
+async function loadLetterSample(value: string | number): Promise<AudioBuffer | null> {
+  const context = getAudioContext();
+  const url = letterSampleUrl(value);
+  if (!context || !url) {
+    return null;
+  }
+
+  const cached = letterSampleBuffers.get(url);
+  if (cached) {
+    return cached;
+  }
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      return null;
+    }
+    const buffer = await decodeAudio(context, await response.arrayBuffer());
+    letterSampleBuffers.set(url, buffer);
+    return buffer;
+  } catch {
+    return null;
+  }
+}
+
+export async function playLetterSample(value: string | number): Promise<boolean> {
+  const context = getAudioContext();
+  if (!context) {
+    return false;
+  }
+
+  if (context.state === "suspended") {
+    await context.resume();
+  }
+
+  const buffer = await loadLetterSample(value);
+  if (!buffer) {
+    return false;
+  }
+
+  const source = context.createBufferSource();
+  source.buffer = buffer;
+  source.connect(context.destination);
+  source.start();
+  return true;
+}
+
 export async function playTone(value: string | number, durationMs = 280): Promise<boolean> {
   const context = getAudioContext();
   if (!context) {
@@ -128,7 +192,7 @@ export async function speakLetter(value: string | number): Promise<boolean> {
     return false;
   }
 
-  const voices = await loadSpeechVoices(500);
+  const voices = await loadSpeechVoices(160);
   const utterance = new SpeechSynthesisUtterance(String(value));
   const voice = pickEnglishVoice(voices);
   if (voice) {
@@ -147,9 +211,12 @@ export async function speakLetter(value: string | number): Promise<boolean> {
       }
       settled = true;
       window.clearTimeout(timer);
+      if (!success) {
+        speech.cancel();
+      }
       resolve(success);
     };
-    const timer = window.setTimeout(() => finish(true), 350);
+    const timer = window.setTimeout(() => finish(false), 450);
     utterance.onstart = () => finish(true);
     utterance.onerror = () => finish(false);
 
@@ -171,7 +238,8 @@ export async function playStimulusAudio(trial: TrialStimulus, config: SessionCon
       await playTone(letter);
     } else {
       const spoke = await speakLetter(letter);
-      if (!spoke && config.audioPreference === "auto") {
+      const sampled = spoke ? true : await playLetterSample(letter);
+      if (!sampled && config.audioPreference === "auto") {
         await playTone(letter);
       }
     }

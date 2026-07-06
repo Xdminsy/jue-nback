@@ -5,6 +5,8 @@ import type { TrialStimulus } from "../types";
 describe("audio playback", () => {
   beforeEach(() => {
     vi.resetModules();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("speaks audio-letter stimuli instead of toning them in auto mode", async () => {
@@ -148,5 +150,87 @@ describe("audio playback", () => {
     expect(resumes).toBe(1);
     expect(starts).toBe(1);
     expect(frequencies[0]).toBeCloseTo(261.63);
+  });
+
+  it("falls back to bundled letter samples when system speech is unavailable", async () => {
+    let bufferStarts = 0;
+    let toneStarts = 0;
+
+    class FakeAudioContext {
+      currentTime = 0;
+      destination = {};
+      state: AudioContextState = "running";
+
+      async decodeAudioData() {
+        return {} as AudioBuffer;
+      }
+
+      createBufferSource() {
+        return {
+          buffer: null,
+          connect: vi.fn(),
+          start: vi.fn(() => {
+            bufferStarts += 1;
+          })
+        };
+      }
+
+      createOscillator() {
+        return {
+          type: "sine",
+          frequency: {
+            setValueAtTime: vi.fn()
+          },
+          connect: vi.fn(),
+          start: vi.fn(() => {
+            toneStarts += 1;
+          }),
+          stop: vi.fn()
+        };
+      }
+
+      createGain() {
+        return {
+          gain: {
+            setValueAtTime: vi.fn(),
+            exponentialRampToValueAtTime: vi.fn()
+          },
+          connect: vi.fn()
+        };
+      }
+    }
+
+    Object.defineProperty(window, "AudioContext", {
+      configurable: true,
+      value: FakeAudioContext
+    });
+    Object.defineProperty(window, "SpeechSynthesisUtterance", {
+      configurable: true,
+      value: undefined
+    });
+    Object.defineProperty(window, "speechSynthesis", {
+      configurable: true,
+      value: undefined
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        arrayBuffer: async () => new ArrayBuffer(8)
+      }))
+    );
+
+    const { playStimulusAudio } = await import("./audio");
+    const trial: TrialStimulus = {
+      trialIndex: 0,
+      values: { "audio-letter": "B" },
+      expectedMatches: { "audio-letter": false }
+    };
+
+    await playStimulusAudio(trial, { ...DEFAULT_CONFIG, channels: ["audio-letter"], audioPreference: "auto" });
+
+    expect(fetch).toHaveBeenCalledWith("/audio/letters/B.wav");
+    expect(bufferStarts).toBe(1);
+    expect(toneStarts).toBe(0);
   });
 });
