@@ -22,13 +22,28 @@ export function ResponseButtons({ answeredChannels = {}, channels, disabled, onR
         const definition = CHANNEL_DEFINITIONS[channel];
         const responseKey = responseKeyAt({ responseKeys }, index);
         const answered = Boolean(answeredChannels[channel]);
+        const respond = () => onRespond(channel);
         return (
           <button
             aria-pressed={answered}
             className={clsx("response-button", answered && "answered")}
             disabled={disabled}
             key={channel}
-            onClick={() => onRespond(channel)}
+            onClick={respond}
+            onPointerDown={(event) => {
+              if (event.pointerType === "mouse") {
+                return;
+              }
+              event.preventDefault();
+              respond();
+            }}
+            onTouchStart={(event) => {
+              if (typeof window !== "undefined" && "PointerEvent" in window) {
+                return;
+              }
+              event.preventDefault();
+              respond();
+            }}
             title={`${t(definition.labelKey)} (${responseKey})`}
             type="button"
           >

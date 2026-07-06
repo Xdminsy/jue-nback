@@ -117,6 +117,26 @@ async function assertResponseButtonsSplitHorizontally(page, testName) {
   }
 }
 
+async function pressFirstTwoResponsesTogether(page, testName) {
+  if (testName !== "mobile") {
+    return false;
+  }
+
+  await page.locator(".practice-controls .response-button").evaluateAll((buttons) => {
+    for (const [index, button] of buttons.slice(0, 2).entries()) {
+      button.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          cancelable: true,
+          pointerId: index + 10,
+          pointerType: "touch"
+        })
+      );
+    }
+  });
+  return true;
+}
+
 async function openMobileNav(page, testName) {
   if (testName !== "mobile") {
     return;
@@ -240,13 +260,21 @@ async function runCase(browser, name, contextOptions) {
   await page.waitForTimeout(250);
 
   const speechAfterStart = await page.evaluate(() => window.__speakCount);
-  await page.keyboard.press("KeyJ");
+  const usedTouchResponses = await pressFirstTwoResponsesTogether(page, name);
+  if (!usedTouchResponses) {
+    await page.keyboard.press("KeyJ");
+  }
   await page.waitForTimeout(100);
   const speechAfterShortcut = await page.evaluate(() => window.__speakCount);
   const shortcutPressed = await positionButton.getAttribute("aria-pressed");
+  const secondResponsePressed = await page.locator(".practice-controls .response-button").nth(1).getAttribute("aria-pressed");
 
   if (shortcutPressed !== "true") {
-    throw new Error(`${name}: KeyJ did not mark the first response button as answered.`);
+    throw new Error(`${name}: first response button was not marked as answered.`);
+  }
+
+  if (usedTouchResponses && secondResponsePressed !== "true") {
+    throw new Error(`${name}: simultaneous touch did not mark the second response button as answered.`);
   }
 
   if (speechAfterStart !== 1 || speechAfterShortcut !== 1) {

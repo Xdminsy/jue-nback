@@ -597,6 +597,9 @@ button:disabled {
   color: var(--text);
   background: #fffaf0;
   border-color: var(--line);
+  touch-action: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .response-button:hover {
