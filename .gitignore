@@ -5,6 +5,7 @@ dev-dist/
 coverage/
 test-results/
 playwright-report/
+docs/references/**/papers/*.pdf
 .env
 .env.*
 !.env.example
