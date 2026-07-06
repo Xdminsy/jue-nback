@@ -619,14 +619,25 @@ button:disabled {
   -webkit-tap-highlight-color: transparent;
 }
 
-.response-button:hover {
-  border-color: var(--teal);
-}
-
 .response-button.answered {
   color: var(--text);
   border-color: var(--teal);
   background: #e3f1ed;
+}
+
+.response-button:focus {
+  outline: none;
+}
+
+.response-button:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .response-button:hover {
+    border-color: var(--teal);
+  }
 }
 
 .response-button.answered kbd {
