@@ -243,12 +243,14 @@ function SessionResult({ channels, saved }: { channels: StimulusChannel[]; saved
       <div className="score-list">
         {channels.map((channel) => {
           const score = summary.scoreByChannel[channel];
+          const targetCount = score.hits + score.misses;
           return (
             <div className="score-row" key={channel}>
               <ChannelBadge channel={channel} compact />
               <span>{formatPercent(score.accuracy)}</span>
               <small>
-                {t("stats.hit")} {score.hits} / {t("stats.falseAlarm")} {score.falseAlarms}
+                {t("stats.hit")} {score.hits}/{targetCount} · {t("stats.miss")} {score.misses} ·{" "}
+                {t("stats.falseAlarm")} {score.falseAlarms}
               </small>
             </div>
           );
